@@ -1,5 +1,6 @@
 import csv
 import argparse
+from tabulate import tabulate
 
 
 def get_args() -> argparse.Namespace:
@@ -49,17 +50,20 @@ def filter_data(data: list[dict], condition: str) -> list[dict]:
     if not condition:
         return data
 
-    column, operation, value = parse_condition(condition)
+    column, operation, value = parse_filter_condition(condition)
+
+    if operation == '=':
+        operation = '=='
 
     for elem in data:
         if isinstance(elem[column], int) and isinstance(value, int):
-            if eval(f"elem[{column}] {operation} {int(value)}"):
+            if eval(f"elem['{column}'] {operation} {int(value)}"):
                 filtered.append(elem)
         elif isinstance(elem[column], float) and isinstance(value, float):
-            if eval(f"elem[{column}] {operation} {float(value)}"):
+            if eval(f"elem['{column}'] {operation} {float(value)}"):
                 filtered.append(elem)
         else:
-            if eval(f"elem[{column}] {operation} {value}"):
+            if eval(f"elem['{column}'] {operation} '{value}'"):
                 filtered.append(elem)
 
     return filtered
@@ -92,11 +96,22 @@ def aggregate_data(data: list[dict], condition: str) -> list[dict]:
     return result
 
 
+def print_data(data: list[dict]):
+    result = []
+    result.append(data[0].keys())
+
+    for row in data:
+        result.append(row.values())
+
+    print(tabulate(result, headers='firstrow', tablefmt='psql'))
+
+
 def main():
     args = get_args()
     data = get_data(args.file)
     data = filter_data(data, args.where)
     data = aggregate_data(data, args.aggregate)
+    print_data(data)
 
 
 if __name__ == '__main__':
