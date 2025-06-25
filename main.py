@@ -28,7 +28,7 @@ def get_data(filename: str):
 
 
 def parse_filter_condition(condition: str) -> tuple[str]:
-    operation_list = ['=', '>=', '<=', '>', '<']
+    operation_list = ['>=', '<=', '=', '>', '<']
 
     for operation in operation_list:
         if operation in condition:
@@ -56,15 +56,16 @@ def filter_data(data: list[dict], condition: str) -> list[dict]:
         operation = '=='
 
     for elem in data:
-        if isinstance(elem[column], int) and isinstance(value, int):
-            if eval(f"elem['{column}'] {operation} {int(value)}"):
+        try:
+            if eval(f"int(elem[column]) {operation} int(value)"):
                 filtered.append(elem)
-        elif isinstance(elem[column], float) and isinstance(value, float):
-            if eval(f"elem['{column}'] {operation} {float(value)}"):
-                filtered.append(elem)
-        else:
-            if eval(f"elem['{column}'] {operation} '{value}'"):
-                filtered.append(elem)
+        except Exception as e:
+            try:
+                if eval(f"float(elem[column]) {operation} float(value)"):
+                    filtered.append(elem)
+            except Exception as e2:
+                if eval(f"elem[column] {operation} value"):
+                    filtered.append(elem)
 
     return filtered
 
@@ -93,7 +94,7 @@ def aggregate_data(data: list[dict], condition: str) -> list[dict]:
     else:
         result['max'] = max(values)
 
-    return result
+    return [result]
 
 
 def print_data(data: list[dict]):
