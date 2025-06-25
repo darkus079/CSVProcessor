@@ -20,8 +20,16 @@ def get_args() -> argparse.Namespace:
     return args
 
 
+def get_data(filename: str):
+    with open(filename, 'r') as file:
+        reader = csv.DictReader(file)
+        return list(reader)
+
+
 def main():
     args = get_args()
+    data = get_data(args.file)
+    print(data)
 
 
 if __name__ == '__main__':
