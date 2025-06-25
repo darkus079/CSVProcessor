@@ -35,6 +35,8 @@ def parse_filter_condition(condition: str) -> tuple[str]:
             column, value = condition.split(operation)
             return column, operation, value
 
+    raise ValueError(f"Incorrect filter condition: '{condition}'")
+
 
 def parse_aggregate_condition(condition: str) -> tuple[str]:
     if '=' in condition:
@@ -42,6 +44,10 @@ def parse_aggregate_condition(condition: str) -> tuple[str]:
 
         if aggregate_func in ('avg', 'min', 'max'):
             return column, aggregate_func
+
+        raise ValueError(f"Incorrect name of aggregation function: '{aggregate_func}'")
+
+    raise ValueError(f"Incorrect aggregation condition: '{condition}'")
 
 
 def filter_data(data: list[dict], condition: str) -> list[dict]:
@@ -52,20 +58,22 @@ def filter_data(data: list[dict], condition: str) -> list[dict]:
 
     column, operation, value = parse_filter_condition(condition)
 
+    if column not in data[0].keys():
+        raise KeyError()
+
     if operation == '=':
         operation = '=='
 
     for elem in data:
         try:
-            if eval(f"int(elem[column]) {operation} int(value)"):
+            if eval(f"float(elem[column]) {operation} float(value)"):
                 filtered.append(elem)
-        except Exception as e:
-            try:
-                if eval(f"float(elem[column]) {operation} float(value)"):
-                    filtered.append(elem)
-            except Exception as e2:
-                if eval(f"elem[column] {operation} value"):
-                    filtered.append(elem)
+        except KeyError as key_error_exc:
+            print(key_error_exc)
+            return []
+        except Exception:
+            if eval(f"elem[column] {operation} value"):
+                filtered.append(elem)
 
     return filtered
 
