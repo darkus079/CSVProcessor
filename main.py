@@ -1,3 +1,5 @@
+from operator import truediv
+
 import csv
 import argparse
 from tabulate import tabulate
@@ -69,12 +71,26 @@ def filter_data(data: list[dict], condition: str) -> list[dict]:
         operation = '=='
 
     for elem in data:
+        is_column_float = True
+        is_value_float = True
+
         try:
-            if eval(f"float(elem[column]) {operation} float(value)"):
-                filtered.append(elem)
+            elem[column] = float(elem[column])
         except ValueError:
+            is_column_float = False
+
+        try:
+            value = float(value)
+        except ValueError:
+            is_value_float = False
+
+        if is_column_float == is_value_float:
             if eval(f"elem[column] {operation} value"):
                 filtered.append(elem)
+        elif is_column_float:
+            raise ValueError(f"Can't compare numbers with string '{value}'")
+        elif is_value_float:
+            raise ValueError(f"Can't compare strings with number {value}")
 
     return filtered
 
