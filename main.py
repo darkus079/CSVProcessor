@@ -33,7 +33,11 @@ def parse_filter_condition(condition: str) -> tuple[str]:
     for operation in operation_list:
         if operation in condition:
             column, value = condition.split(operation)
-            return column, operation, value
+
+            if column and value:
+                return column, operation, value
+
+            raise ValueError(f"Incorrect filter condition: '{condition}'")
 
     raise ValueError(f"Incorrect filter condition: '{condition}'")
 
@@ -53,13 +57,13 @@ def parse_aggregate_condition(condition: str) -> tuple[str]:
 def filter_data(data: list[dict], condition: str) -> list[dict]:
     filtered = []
 
-    if not condition:
+    if not condition or not data:
         return data
 
     column, operation, value = parse_filter_condition(condition)
 
     if column not in data[0].keys():
-        raise KeyError()
+        raise KeyError(f"Column '{column}' not found.")
 
     if operation == '=':
         operation = '=='
@@ -68,10 +72,7 @@ def filter_data(data: list[dict], condition: str) -> list[dict]:
         try:
             if eval(f"float(elem[column]) {operation} float(value)"):
                 filtered.append(elem)
-        except KeyError as key_error_exc:
-            print(key_error_exc)
-            return []
-        except Exception:
+        except TypeError:
             if eval(f"elem[column] {operation} value"):
                 filtered.append(elem)
 
@@ -86,6 +87,8 @@ def aggregate_data(data: list[dict], condition: str) -> list[dict]:
 
     try:
         values = [float(row[column]) for row in data]
+    except KeyError as key_error_exc:
+        raise key_error_exc
     except ValueError:
         raise ValueError(f"Cannot perform aggregation on non-numeric column: {column}")
 
@@ -106,6 +109,10 @@ def aggregate_data(data: list[dict], condition: str) -> list[dict]:
 
 
 def print_data(data: list[dict]):
+    if not data:
+        print('No rows matching the conditions were found.')
+        return
+
     result = []
     result.append(data[0].keys())
 
@@ -117,10 +124,14 @@ def print_data(data: list[dict]):
 
 def main():
     args = get_args()
-    data = get_data(args.file)
-    data = filter_data(data, args.where)
-    data = aggregate_data(data, args.aggregate)
-    print_data(data)
+
+    try:
+        data = get_data(args.file)
+        data = filter_data(data, args.where)
+        data = aggregate_data(data, args.aggregate)
+        print_data(data)
+    except Exception as exc:
+        print(exc)
 
 
 if __name__ == '__main__':
