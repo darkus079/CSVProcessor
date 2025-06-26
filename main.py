@@ -72,7 +72,7 @@ def filter_data(data: list[dict], condition: str) -> list[dict]:
         try:
             if eval(f"float(elem[column]) {operation} float(value)"):
                 filtered.append(elem)
-        except TypeError:
+        except ValueError:
             if eval(f"elem[column] {operation} value"):
                 filtered.append(elem)
 
@@ -84,6 +84,9 @@ def aggregate_data(data: list[dict], condition: str) -> list[dict]:
         return data
 
     column, aggregate_func = parse_aggregate_condition(condition)
+
+    if aggregate_func not in ('avg', 'min', 'max'):
+        raise ValueError(f"Unknown name of aggregate function: '{aggregate_func}'")
 
     try:
         values = [float(row[column]) for row in data]
